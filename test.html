@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cosmic Essay Grader</title>
+    <style>
+        :root {
+            --space-bg: #050b18;
+            --accent: #4cc9f0;
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: var(--space-bg); 
+            margin: 0;
+            overflow-x: hidden;
+            color: white;
+            min-height: 100vh;
+        }
+
+        /* --- BACKGROUND ELEMENTS --- */
+        #starCanvas {
+            position: fixed;
+            top: 0; left: 0;
+            z-index: -1;
+            cursor: pointer;
+        }
+
+        .moon {
+            position: fixed;
+            top: 50px;
+            right: 80px;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle at 30% 30%, #f5f5f5, #ccc);
+            border-radius: 50%;
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.4);
+            z-index: -2;
+            opacity: 0.9;
+        }
+
+        .spacecraft {
+            position: fixed;
+            top: 20%;
+            left: -100px;
+            font-size: 40px;
+            z-index: -1;
+            animation: flyOver 25s linear infinite;
+            opacity: 0.8;
+        }
+
+        /* --- NEW ASTRONAUT STYLES --- */
+        .astronaut {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 120px;
+            height: 120px;
+            z-index: 10;
+            cursor: pointer;
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));
+            animation: float 4s ease-in-out infinite;
+            transition: transform 0.2s;
+        }
+
+        .astronaut:hover {
+            transform: scale(1.05);
+        }
+
+        /* The Waving Animation (Left Arm) */
+        #leftArm {
+            transform-origin: 25px 50px; /* Pivots at shoulder */
+            animation: waveArm 2.5s ease-in-out infinite;
+        }
+
+        /* Right arm static by default */
+        #rightArm {
+            transform-origin: 75px 50px;
+        }
+
+        /* --- SHOCK REACTION STATES --- */
+        .shocked {
+            animation: shake 0.3s ease-in-out infinite !important; /* Overrides float */
+        }
+
+        /* Raise Left Arm High */
+        .shocked #leftArm {
+            animation: none;
+            transform: rotate(-130deg); /* Hands up! */
+            transition: transform 0.1s;
+        }
+
+        /* Raise Right Arm High */
+        .shocked #rightArm {
+            transform: rotate(130deg); /* Hands up! */
+            transition: transform 0.1s;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes flyOver {
+            0% { left: -100px; top: 20%; transform: rotate(10deg); }
+            50% { top: 30%; }
+            100% { left: 110vw; top: 10%; transform: rotate(10deg); }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes waveArm {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(-40deg); } /* Wave up */
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        /* --- UI LAYOUT --- */
+        .container { 
+            display: grid; 
+            grid-template-columns: 1fr 350px; 
+            gap: 30px; 
+            max-width: 1100px; 
+            margin: auto; 
+            padding: 60px 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .card, textarea {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            color: white;
+        }
+
+        .editor-section h1 {
+            text-shadow: 0 0 15px var(--accent);
+            text-transform: uppercase;
+        }
+
+        textarea {
+            width: 100%; height: 350px; padding: 20px; 
+            font-size: 16px; outline: none; box-sizing: border-box;
+        }
+        textarea:focus { border-color: var(--accent); }
+
+        button { 
+            width: 100%; padding: 18px; 
+            background: linear-gradient(45deg, #4361ee, #4cc9f0);
+            color: white; border: none; border-radius: 12px; 
+            cursor: pointer; font-size: 18px; font-weight: bold; margin-top: 20px;
+            transition: 0.2s;
+        }
+        button:hover { transform: translateY(-3px); box-shadow: 0 0 20px #4cc9f0; }
+
+        .score-display { font-size: 64px; font-weight: bold; color: var(--accent); text-align: center; }
+        .progress-bar { background: rgba(255,255,255,0.1); height: 12px; border-radius: 10px; overflow: hidden; }
+        #progressFill { background: var(--accent); transition: 1s; height: 100%; }
+        
+        .metric { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .metric p { font-size: 20px; font-weight: bold; margin: 5px 0 0; }
+    </style>
+</head>
+<body>
+    <canvas id="starCanvas"></canvas>
+    <div class="moon"></div>
+    <div class="spacecraft">🚀</div>
+    
+    <div class="astronaut" id="astro" onclick="reactShock()">
+        <svg width="100%" height="100%" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="25" fill="#fff" />
+            <rect x="35" y="35" width="30" height="20" rx="10" fill="#333" />
+            <path d="M55,40 Q60,40 60,45" stroke="rgba(255,255,255,0.5)" stroke-width="2" fill="none" />
+            
+            <path id="leftArm" d="M25,50 Q10,40 15,20" stroke="#fff" stroke-width="8" stroke-linecap="round" fill="none" />
+            
+            <path id="rightArm" d="M75,50 Q90,60 85,80" stroke="#fff" stroke-width="8" stroke-linecap="round" fill="none" />
+            
+            <path d="M40,75 L35,90 M60,75 L65,90" stroke="#fff" stroke-width="8" stroke-linecap="round" />
+        </svg>
+    </div>
+
+    <div class="container">
+        <section class="editor-section">
+            <h1>Galactic Grader</h1>
+            <textarea id="essayInput" placeholder="Enter your mission log here..."></textarea>
+            <button id="gradeBtn" onclick="analyzeEssay()">Launch Analysis</button>
+        </section>
+
+        <section class="results-section">
+            <div class="card" style="padding: 25px;">
+                <h2 style="margin-top:0">Mission Report</h2>
+                <div class="score-display"><span id="scoreValue">0</span><small>/100</small></div>
+                <div class="progress-bar"><div id="progressFill" style="width: 0%"></div></div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+                    <div class="metric"><label>Syntax</label><p id="grammarScore">--</p></div>
+                    <div class="metric"><label>Lexicon</label><p id="vocabScore">--</p></div>
+                </div>
+
+                <div class="feedback-box">
+                    <h3 style="color: var(--accent);">COMMS:</h3>
+                    <p id="feedbackText" style="font-style: italic; color: #ddd;">Awaiting data...</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // --- INTERACTIVE STARS SYSTEM ---
+        const canvas = document.getElementById('starCanvas');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+        let bursts = [];
+
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            stars = [];
+            for(let i=0; i<150; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2 + 2, 
+                    opacity: Math.random(),
+                    speed: Math.random() * 0.02
+                });
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); 
+            
+            // Draw Stars
+            stars.forEach(s => {
+                ctx.fillStyle = `rgba(255, 255, 255, ${s.opacity})`;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
+                ctx.fill();
+                s.opacity += s.speed;
+                if(s.opacity > 1 || s.opacity < 0.2) s.speed *= -1;
+            });
+
+            // Draw Bursts
+            bursts.forEach((b, index) => {
+                b.particles.forEach(p => {
+                    ctx.fillStyle = `rgba(76, 201, 240, ${p.life})`;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                    ctx.fill();
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life -= 0.02;
+                });
+                if(b.particles[0].life <= 0) bursts.splice(index, 1);
+            });
+
+            requestAnimationFrame(draw);
+        }
+
+        // Interaction Logic for Stars
+        canvas.addEventListener('mousedown', (e) => {
+            const particles = [];
+            for(let i=0; i<20; i++) {
+                particles.push({
+                    x: e.clientX, y: e.clientY,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    r: Math.random() * 5,
+                    life: 1
+                });
+            }
+            bursts.push({particles});
+        });
+
+        window.addEventListener('resize', initCanvas);
+        initCanvas();
+        draw();
+
+        // --- ASTRONAUT REACTION LOGIC ---
+        function reactShock() {
+            const astro = document.getElementById('astro');
+            
+            // Add the shock class
+            astro.classList.add('shocked');
+            
+            // Remove it after 1.5 seconds to return to normal waving
+            setTimeout(() => {
+                astro.classList.remove('shocked');
+            }, 1500);
+        }
+
+        // --- BACKEND CONNECTION ---
+        async function analyzeEssay() {
+            const text = document.getElementById('essayInput').value;
+            const btn = document.getElementById('gradeBtn');
+            
+            if (!text) return alert("Please input text.");
+            
+            btn.innerText = "Scanning Deep Space...";
+            try {
+                // Ensure the port matches your Python script (8000)
+                const response = await fetch('http://127.0.0.1:8000/grade', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+                const data = await response.json();
+                
+                document.getElementById('scoreValue').innerText = data.final_score;
+                document.getElementById('progressFill').style.width = data.final_score + "%";
+                document.getElementById('grammarScore').innerText = data.grammar_score;
+                document.getElementById('vocabScore').innerText = data.vocab_score;
+                document.getElementById('feedbackText').innerText = data.feedback;
+            } catch (e) {
+                console.error(e);
+                alert("Error: Ensure 'server.py' is running!");
+            } finally {
+                btn.innerText = "Launch Analysis";
+            }
+        }
+    </script>
+</body>
+</html>
