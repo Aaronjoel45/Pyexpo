@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Automated Essay Grading System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    background: #f2f4f8;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 80%;
+    max-width: 600px;
+    margin: 50px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+h1 {
+    text-align: center;
+    color: #2c3e50;
+}
+
+p {
+    text-align: center;
+}
+
+textarea {
+    width: 100%;
+    height: 150px;
+    padding: 10px;
+    margin-top: 10px;
+    font-size: 14px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 15px;
+    background: #3498db;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #2980b9;
+}
+
+.result-box {
+    margin-top: 20px;
+    display: none;
+    background: #ecf0f1;
+    padding: 15px;
+    border-radius: 5px;
+}
+    </style>
+    <div class="container">
+        <h1>Automated Essay Grading System</h1>
+        <p>Enter your essay below to get an instant evaluation</p>
+
+        <textarea id="essay" placeholder="Type your essay here..."></textarea>
+
+        <button onclick="gradeEssay()">Submit Essay</button>
+
+        <div id="result" class="result-box">
+            <h3>Result</h3>
+            <p id="score"></p>
+            <p id="feedback"></p>
+        </div>
+    </div>
+
+    <script src="script.js">
+        function gradeEssay() {
+    const essayText = document.getElementById("essay").value;
+
+    if (essayText.trim() === "") {
+        alert("Please enter an essay!");
+        return;
+    }                                                                       
+    // Dummy score logic (frontend demo)
+    let wordCount = essayText.split(" ").length;
+    let score = Math.min(10, Math.floor(wordCount / 20));
+
+    document.getElementById("result").style.display = "block";
+    document.getElementById("score").innerText =
+        "Score: " + score + " / 10";
+
+    document.getElementById("feedback").innerText =
+        score >= 7
+        ? "Good essay! Well structured and relevant."
+        : "Needs improvement. Add more content and clarity.";
+}
+    </script>
+</body>
+</html>
